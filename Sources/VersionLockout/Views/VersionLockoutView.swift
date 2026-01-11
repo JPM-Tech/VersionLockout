@@ -71,7 +71,7 @@ public struct VersionLockoutView<LoadingView: View, Recommended: View, Required:
                 }
             }
         }
-        .task {
+        .task(id: url) {
             await viewModel.refreshStatus()
         }
     }
