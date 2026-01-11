@@ -14,7 +14,7 @@ public struct BuiltInEOLView: View {
         self.message = message
     }
     
-    var body: some View {
+    public var body: some View {
         VStack {
             ScrollView {
                 VStack(spacing: 18) {
