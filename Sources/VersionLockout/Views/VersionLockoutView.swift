@@ -64,7 +64,7 @@ public struct VersionLockoutView<
                 loading()
             }
         }
-        .task(id: viewModel.url) {
+        .task {
             await viewModel.refreshStatus()
         }
     }

@@ -41,13 +41,13 @@ import VersionLockout // ADD: this import
 
 @main
 struct ExampleApp: App {
-    // ADD: the link to your version lockout data
-    let linkToMyVersionData = URL(string: "https://github.com/link-to-my-version-data.json")!
+    // ADD: VersionLockoutViewModel to your view
+    @State var versionLockoutVM = VersionLockoutViewModel(URL(string: "https://github.com/link-to-my-version-data.json")!)
     
     var body: some Scene {
         WindowGroup {
-            // WRAP: your main view with VersionLockoutView and pass the link to fetch the data
-            VersionLockoutView(linkToMyVersionData) {
+            // WRAP: your main view with VersionLockoutView and pass the view model
+            VersionLockoutView(viewModel: versionLockoutVM) {
                 ContentView()
             }
         }
