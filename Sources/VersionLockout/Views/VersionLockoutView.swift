@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct VersionLockoutView<LoadingView: View, Recommended: View, Required: View, EOL: View, Content: View>: View {
+public struct VersionLockoutView<LoadingView: View, Recommended: View, Required: View, EOL: View, Content: View>: View {
     let url: URL
     
     @State var viewModel: VersionLockoutViewModel
