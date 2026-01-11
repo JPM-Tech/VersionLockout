@@ -7,31 +7,27 @@
 
 import SwiftUI
 
-public struct VersionLockoutView<LoadingView: View, Recommended: View, Required: View, EOL: View, Content: View>: View {
-    let url: URL
-    
-    @State var viewModel: VersionLockoutViewModel
-    
-    @ViewBuilder
-    let loading: () -> LoadingView
-    
-    @ViewBuilder
-    let recommedUpdate: (URL, @escaping () -> Void) -> Recommended
-    
-    @ViewBuilder
-    let requireUpdate: (URL) -> Required
-    
-    @ViewBuilder
-    let eol: (String?) -> EOL
-    
-    @ViewBuilder
-    let content: () -> Content
-    
+import SwiftUI
+
+public struct VersionLockoutView<
+    LoadingView: View,
+    Recommended: View,
+    Required: View,
+    EOL: View,
+    Content: View
+>: View {
+
+    @Bindable var viewModel: VersionLockoutViewModel
+
+    @ViewBuilder let loading: () -> LoadingView
+    @ViewBuilder let recommedUpdate: (URL, @escaping () -> Void) -> Recommended
+    @ViewBuilder let requireUpdate: (URL) -> Required
+    @ViewBuilder let eol: (String?) -> EOL
+    @ViewBuilder let content: () -> Content
+
     public init(
-        url: URL,
-        @ViewBuilder ifLoading: @escaping () -> LoadingView = {
-            EmptyView()
-        },
+        viewModel: VersionLockoutViewModel,
+        @ViewBuilder ifLoading: @escaping () -> LoadingView = { EmptyView() },
         @ViewBuilder updateRecommended: @escaping (URL, @escaping () -> Void) -> Recommended = { url, skip in
             BuiltInUpdateView(requireUpdate: false, updateUrl: url, skip: skip)
         },
@@ -43,42 +39,41 @@ public struct VersionLockoutView<LoadingView: View, Recommended: View, Required:
         },
         @ViewBuilder upToDate content: @escaping () -> Content
     ) {
-        _viewModel = State(initialValue: VersionLockoutViewModel(url))
-        self.url = url
+        self.viewModel = viewModel
         self.loading = ifLoading
         self.requireUpdate = updateRequred
         self.recommedUpdate = updateRecommended
         self.eol = endOfLife
         self.content = content
     }
-    
+
     public var body: some View {
-        Group {
-            if viewModel.isLoading {
-                loading()
-            } else {
-                switch viewModel.status {
-                case let .eol(message):
-                    eol(message)
-                case let .required(url):
-                    requireUpdate(url)
-                case let .recommended(url):
-                    recommedUpdate(url) {
-                        self.viewModel.status = .upToDate
-                    }
-                default:
-                    content()
+        ZStack {
+            switch viewModel.status {
+            case let .eol(message):
+                eol(message)
+            case let .required(url):
+                requireUpdate(url)
+            case let .recommended(url):
+                recommedUpdate(url) {
+                    viewModel.status = .upToDate
                 }
+            case .upToDate:
+                content()
+            case nil:
+                loading()
             }
         }
-        .task(id: url) {
+        .task(id: viewModel.url) {
             await viewModel.refreshStatus()
         }
     }
 }
 
+
 #Preview {
-    VersionLockoutView(url: URL(string: "https://jpmtech.io")!) {
+    @Previewable @State var vm = VersionLockoutViewModel(URL(string: "https://jpmtech.io")!)
+    VersionLockoutView(viewModel: vm) {
         Text("My basic content")
     }
 }
