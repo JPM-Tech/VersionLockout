@@ -28,7 +28,7 @@ public struct VersionLockoutView<LoadingView: View, Recommended: View, Required:
     let content: () -> Content
     
     public init(
-        versionLockoutURL: URL,
+        url: URL,
         @ViewBuilder ifLoading: @escaping () -> LoadingView = {
             EmptyView()
         },
@@ -43,8 +43,8 @@ public struct VersionLockoutView<LoadingView: View, Recommended: View, Required:
         },
         @ViewBuilder upToDate content: @escaping () -> Content
     ) {
-        _viewModel = State(initialValue: VersionLockoutViewModel(versionLockoutURL))
-        self.url = versionLockoutURL
+        _viewModel = State(initialValue: VersionLockoutViewModel(url))
+        self.url = url
         self.loading = ifLoading
         self.requireUpdate = updateRequred
         self.recommedUpdate = updateRecommended
@@ -52,7 +52,7 @@ public struct VersionLockoutView<LoadingView: View, Recommended: View, Required:
         self.content = content
     }
     
-    var body: some View {
+    public var body: some View {
         Group {
             if viewModel.isLoading {
                 loading()
@@ -78,7 +78,7 @@ public struct VersionLockoutView<LoadingView: View, Recommended: View, Required:
 }
 
 #Preview {
-    VersionLockoutView(versionLockoutURL: URL(string: "https://jpmtech.io")!) {
+    VersionLockoutView(url: URL(string: "https://jpmtech.io")!) {
         Text("My basic content")
     }
 }

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct BuiltInEOLView: View {
+public struct BuiltInEOLView: View {
     let message: LocalizedStringKey?
     
     public init(message: LocalizedStringKey? =  nil) {
