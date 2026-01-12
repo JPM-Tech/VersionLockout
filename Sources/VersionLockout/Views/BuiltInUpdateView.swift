@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Playgrounds
 
 public struct BuiltInUpdateView: View {
     @Environment(\.openURL) var openURL

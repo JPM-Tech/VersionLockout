@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  VersionLockoutViewModel.swift
 //  VersionLockout
 //
 //  Created by Chase Lewis on 1/9/26.
