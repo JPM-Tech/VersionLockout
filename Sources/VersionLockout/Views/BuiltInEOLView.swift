@@ -31,6 +31,10 @@ public struct BuiltInEOLView: View {
     }
 }
 
-#Preview {
+#Preview("No Message") {
     BuiltInEOLView()
+}
+
+#Preview("With Message") {
+    BuiltInEOLView(message: LocalizedStringKey("Well friend, it's been a good run, but all good things must come to an end at some point."))
 }

@@ -54,6 +54,22 @@ struct ExampleApp: App {
 }
 ```
 
+Currently, the End Of Life (EOL) option is only useful on the Android side (since the App Store allows you to remove apps from a users device and the Play Store does not)
+
+Here are the screenshots of the built in views:
+
+Recommended update:
+
+![Recommended update screen](Docs/Images/Recommended-Update-Example.png)
+
+Required update:
+
+![Required update screen](Docs/Images/Required-Update-Example.png)
+
+End of Life (Android Only):
+
+![End of life screen](Docs/Images/EOL-Example.png)
+
 ### Displaying your own custom views
 
 If you want to display your own view for any status, then the code would look like the following example:
