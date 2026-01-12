@@ -54,11 +54,17 @@ struct ExampleApp: App {
 }
 ```
 
-Currently, the End Of Life (EOL) option is only useful on the Android side (since the App Store allows you to remove apps from a users device and the Play Store does not)
+### Uses for each screen
+
+* Recommended update: Gives the user the ability to skip updating their app for a short time (uses the task modifier to check for updates and reminds them).
+* Required update: Prevents the user from interacting with the app until the update has been completed.
+* EOL Update: Currently, the End Of Life (EOL) option is only useful on the Android side (since the App Store allows you to remove apps from a users device and the Play Store does not). The message parameter is currently only used for this screen.
+
+## Built-in Views
 
 Here are the screenshots of the built in views:
 
-Recommended update:
+Recommended update (gives the user the ability to skip these updates for a short time):
 
 ![Recommended update screen](Docs/Images/Recommended-Update-Example.png)
 
