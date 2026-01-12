@@ -62,8 +62,6 @@ struct ExampleApp: App {
 
 ## Built-in Views
 
-Here are the screenshots of the built in views:
-
 Recommended update (gives the user the ability to skip these updates for a short time):
 
 ![Recommended update screen](Docs/Images/Recommended-Update-Example.png)
