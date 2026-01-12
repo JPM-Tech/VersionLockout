@@ -25,7 +25,6 @@ First things first, you'll need an endpoint, a JSON file in an S3 bucket, or eve
 ```
 
 Next, you will add the package to your app using Swift Package Manager (SPM).
-
 ### Add the package to your app
 
 To add this package to your app, use [Swift Package Manager](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app). Be sure to add VersionLockout to your app target when you add the dependency.
@@ -54,3 +53,37 @@ struct ExampleApp: App {
     }
 }
 ```
+
+### Displaying your own custom views
+
+If you want to display your own view for any status, then the code would look like the following example:
+
+```swift
+import SwiftUI
+import VersionLockout // ADD: this import
+
+@main
+struct ExampleApp: App {
+    // ADD: VersionLockoutViewModel to your view
+    @State var versionLockoutVM = VersionLockoutViewModel(URL(string: "https://github.com/link-to-my-version-data.json")!)
+    
+    var body: some Scene {
+        WindowGroup {
+            // Example of completely custom views for every status
+            VersionLockoutView(viewModel: versionLockoutVM) {
+                Text("I'm Loading")
+            } updateRecommended: { _, _ in 
+                Text("Recomend")
+            } updateRequred: { _ in 
+                Text("Required")
+            } endOfLife: { _ in
+                Text("I'm EOL")
+            } upToDate: {
+                // Your normal app view goes here
+                Text("I'm up to date")
+            }
+        }
+    }
+}
+```
+
