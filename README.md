@@ -79,15 +79,15 @@ import VersionLockout // ADD: this import
 struct ExampleApp: App {
     // ADD: VersionLockoutViewModel to your view
     @State var versionLockoutVM = VersionLockoutViewModel(URL(string: "https://github.com/link-to-my-version-data.json")!)
-    
+
     var body: some Scene {
         WindowGroup {
             // Example of completely custom views for every status
             VersionLockoutView(viewModel: versionLockoutVM) {
                 Text("I'm Loading")
-            } updateRecommended: { _, _ in 
+            } updateRecommended: { _, _ in
                 Text("Recomend")
-            } updateRequred: { _ in 
+            } updateRequred: { _ in
                 Text("Required")
             } endOfLife: { _ in
                 Text("I'm EOL")
@@ -100,3 +100,88 @@ struct ExampleApp: App {
 }
 ```
 
+### Closure parameters explained
+
+Each custom view closure receives parameters that you can use to build your UI:
+
+| Closure | Parameters | Description |
+|---------|------------|-------------|
+| `ifLoading` | None | Shown while fetching version data |
+| `updateRecommended` | `updateUrl: URL`, `skip: () -> Void` | The `updateUrl` is the App Store link from your JSON. Call `skip()` to let the user dismiss the recommendation temporarily. |
+| `updateRequred` | `updateUrl: URL` | The `updateUrl` is the App Store link from your JSON. No skip option since the update is mandatory. |
+| `endOfLife` | `message: String?` | The optional message from your JSON to display to the user. |
+| `upToDate` | None | Your main app content goes here |
+
+### Using the closure parameters
+
+Here's an example showing how to use these parameters in your custom views:
+
+```swift
+struct MyCustomUpdateRecommendedView: View {
+    let updateUrl: URL
+    let skip: () -> Void
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack {
+            Text("A new version is available!")
+            Button("Update Now") {
+                openURL(updateUrl)
+            }
+            Button("Remind Me Later") {
+                skip() // Dismisses this view and shows the main content
+            }
+        }
+    }
+}
+
+struct MyCustomUpdateRequiredView: View {
+    let updateUrl: URL
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack {
+            Text("Please update to continue using the app")
+            Button("Update Now") {
+                openURL(updateUrl)
+            }
+            // No skip option - update is required
+        }
+    }
+}
+
+struct MyCustomEOLView: View {
+    let message: String?
+
+    var body: some View {
+        VStack {
+            Text("This app is no longer supported")
+            if let message = message {
+                Text(message)
+            }
+        }
+    }
+}
+```
+
+Then use your custom views in the `VersionLockoutView`:
+
+```swift
+VersionLockoutView(viewModel: versionLockoutVM) {
+    // Loading - no parameters
+    ProgressView("Checking for updates...")
+
+} updateRecommended: { updateUrl, skip in
+    MyCustomUpdateRecommendedView(updateUrl: updateUrl, skip: skip)
+
+} updateRequred: { updateUrl in
+    MyCustomUpdateRequiredView(updateUrl: updateUrl)
+
+} endOfLife: { message in
+    MyCustomEOLView(message: message)
+
+} upToDate: {
+    // No parameters - your main app content
+    ContentView()
+}
+```
