@@ -9,13 +9,6 @@ import Foundation
 import Testing
 @testable import VersionLockout
 
-/// Thread-safe counter for testing
-final class Counter: @unchecked Sendable {
-    private var _value = 0
-    var value: Int { _value }
-    func increment() { _value += 1 }
-}
-
 @MainActor
 struct DeferredTaskTests {
 
@@ -41,7 +34,7 @@ struct DeferredTaskTests {
         _ = await task.value
 
         // Give the defer a moment to execute
-        await Task.yield()
+        await yield()
         #expect(deferred.hasInFlightTask == false)
     }
 
@@ -57,7 +50,7 @@ struct DeferredTaskTests {
             return 42
         })
 
-        await Task.yield()
+        await yield()
 
         // Start second call while first is in flight - should get same task
         let task2 = deferred.getOrPut(Task {
@@ -87,7 +80,7 @@ struct DeferredTaskTests {
             return counter.value
         }).value
 
-        await Task.yield() // Let defer clear the task
+        await yield() // Let defer clear the task
 
         // Second call (after first completed)
         let result2 = await deferred.getOrPut(Task {
@@ -166,8 +159,16 @@ struct DeferredTaskTests {
         #expect(deferred.hasInFlightTask == true)
 
         _ = await task.value
-        await Task.yield()
+        await yield()
 
         #expect(deferred.hasInFlightTask == false)
     }
+}
+
+/// Thread-safe counter for testing
+@MainActor
+final class Counter: @unchecked Sendable {
+    private var _value = 0
+    var value: Int { _value }
+    func increment() { _value += 1 }
 }
