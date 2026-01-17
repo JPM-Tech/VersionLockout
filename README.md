@@ -62,17 +62,10 @@ struct ExampleApp: App {
 
 ## Built-in Views
 
-Recommended update (gives the user the ability to skip these updates for a short time):
+|Recommended update|Required update|End of Life|
+|:---:|:---:|:---:|
+|![Recommended update screen](Docs/Images/Recommended-Update-Example.png)|![Required update screen](Docs/Images/Required-Update-Example.png)|![End of life screen](Docs/Images/EOL-Example.png)|
 
-![Recommended update screen](Docs/Images/Recommended-Update-Example.png)
-
-Required update:
-
-![Required update screen](Docs/Images/Required-Update-Example.png)
-
-End of Life (Android Only):
-
-![End of life screen](Docs/Images/EOL-Example.png)
 
 ### Displaying your own custom views
 
