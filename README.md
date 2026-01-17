@@ -85,11 +85,18 @@ By default, VersionLockout re-checks the version API every **3 hours** when your
 - If the interval has passed, a new fetch is triggered automatically
 
 **Custom refresh interval:**
+The `refreshInterval` parameter accepts any `Measurement<UnitDuration>`, giving you flexibility in how you specify the interval:
 ```swift
-// Example with custom 1-hour refresh interval
-@State var versionLockoutVM = VersionLockoutViewModel(
+// 1 hour
+@State var vm = VersionLockoutViewModel(
     URL(string: "https://github.com/link-to-my-version-data.json")!,
-    refreshIntervalHours: 1
+    refreshInterval: .init(value: 1, unit: .hours)
+)
+
+// 30 minutes
+@State var vm = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    refreshInterval: .init(value: 30, unit: .minutes)
 )
 ```
 
@@ -98,7 +105,7 @@ To effectively disable automatic refresh (check only on launch), set a very larg
 ```swift
 @State var versionLockoutVM = VersionLockoutViewModel(
     URL(string: "https://github.com/link-to-my-version-data.json")!,
-    refreshIntervalHours: 8760 // 1 year
+    refreshInterval: .init(value: 1, unit: .days) // Check once per day
 )
 ```
 

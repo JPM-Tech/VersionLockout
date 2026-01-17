@@ -165,7 +165,7 @@ struct VersionLockoutViewModelTests {
 
         let vm = VersionLockoutViewModel(
             url,
-            refreshIntervalHours: 3,
+            refreshInterval: .init(value: 3, unit: .hours),
             fetcher: fetcher,
             statusCalculator: calculator,
             appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
@@ -192,7 +192,7 @@ struct VersionLockoutViewModelTests {
 
         let vm = VersionLockoutViewModel(
             url,
-            refreshIntervalHours: 3,
+            refreshInterval: .init(value: 3, unit: .hours),
             fetcher: fetcher,
             statusCalculator: calculator,
             appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
@@ -219,7 +219,7 @@ struct VersionLockoutViewModelTests {
 
         let vm = VersionLockoutViewModel(
             url,
-            refreshIntervalHours: 3,
+            refreshInterval: .init(value: 3, unit: .hours),
             fetcher: fetcher,
             statusCalculator: calculator,
             appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
@@ -245,7 +245,7 @@ struct VersionLockoutViewModelTests {
 
         let vm = VersionLockoutViewModel(
             url,
-            refreshIntervalHours: 3,
+            refreshInterval: .init(value: 3, unit: .hours),
             fetcher: fetcher,
             statusCalculator: calculator,
             appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),

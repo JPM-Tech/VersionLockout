@@ -19,7 +19,7 @@ public final class VersionLockoutViewModel {
     private let fetcher: ResponseFetching
     private let statusCalculator: StatusCalculating
     private let appVersionProvider: AppVersionProviding
-    private let refreshIntervalHours: UInt
+    private let refreshInterval: Measurement<UnitDuration>
     private let showLoadingOnRefresh: Bool
     private let dateProvider: @Sendable () -> Date
     private let lastFetchStorage: LastFetchStoring
@@ -29,7 +29,8 @@ public final class VersionLockoutViewModel {
     /// Creates a new VersionLockoutViewModel.
     /// - Parameters:
     ///   - versionLockoutURL: The URL to fetch version lockout data from.
-    ///   - refreshIntervalHours: How often to re-fetch when app returns to foreground. Default is 3 hours.
+    ///   - refreshInterval: How often to re-fetch when app returns to foreground. Default is 3 hours.
+    ///     Supports any `UnitDuration` (e.g., `.hours`, `.minutes`, `.seconds`).
     ///   - showLoadingOnRefresh: Whether to show loading state on subsequent refreshes. Default is `false`,
     ///     meaning loading state only shows on initial load when no status exists yet.
     ///   - fetcher: The response fetcher. Default uses `ResponseFetcher`.
@@ -39,7 +40,7 @@ public final class VersionLockoutViewModel {
     ///   - lastFetchStorage: Storage for the last fetch timestamp. Default uses `UserDefaultsLastFetchStorage`.
     public init(
         _ versionLockoutURL: URL,
-        refreshIntervalHours: UInt = 3,
+        refreshInterval: Measurement<UnitDuration> = .init(value: 3, unit: .hours),
         showLoadingOnRefresh: Bool = false,
         fetcher: ResponseFetching = ResponseFetcher(),
         statusCalculator: StatusCalculating = StatusCalculator(),
@@ -48,7 +49,7 @@ public final class VersionLockoutViewModel {
         lastFetchStorage: LastFetchStoring = UserDefaultsLastFetchStorage()
     ) {
         self.url = versionLockoutURL
-        self.refreshIntervalHours = refreshIntervalHours
+        self.refreshInterval = refreshInterval
         self.showLoadingOnRefresh = showLoadingOnRefresh
         self.fetcher = fetcher
         self.statusCalculator = statusCalculator
@@ -97,7 +98,7 @@ public final class VersionLockoutViewModel {
     private func shouldRefresh() -> Bool {
         guard let lastFetch = lastFetchStorage.lastFetchDate() else { return true }
         let elapsed = dateProvider().timeIntervalSince(lastFetch)
-        let intervalSeconds = TimeInterval(refreshIntervalHours) * 3600
+        let intervalSeconds = refreshInterval.converted(to: .seconds).value
         return elapsed < 0 || elapsed >= intervalSeconds
     }
 }
