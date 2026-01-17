@@ -102,6 +102,15 @@ To effectively disable automatic refresh (check only on launch), set a very larg
 )
 ```
 
+**Loading state on refresh:**
+By default, the loading state (`isLoading`) only shows on the initial load when no status exists yet. Subsequent refreshes happen silently in the background, keeping the current content visible. If you want to show a loading indicator on every refresh:
+```swift
+@State var versionLockoutVM = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    showLoadingOnRefresh: true
+)
+```
+
 ### Displaying your own custom views
 
 If you want to display your own view for any status, then the code would look like the following example:

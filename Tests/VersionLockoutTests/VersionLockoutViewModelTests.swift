@@ -405,4 +405,91 @@ struct VersionLockoutViewModelTests {
         #expect(storage.setCallCount == 0)
         #expect(storage.storedDate == nil)
     }
+
+    // MARK: - Loading State Tests
+
+    @Test("isLoading is true on initial load when status is nil")
+    func isLoading_trueOnInitialLoad() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let fetcher = FetcherSpy(.delayedSucceed(response, nanos: 100_000_000))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0")
+        )
+
+        #expect(vm.status == nil)
+
+        async let work: Void = vm.refreshStatus()
+        await Task.yield()
+
+        #expect(vm.isLoading == true)
+
+        await work
+    }
+
+    @Test("isLoading is false on refresh when showLoadingOnRefresh is false (default)")
+    func isLoading_falseOnRefresh_whenOptionDisabled() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let fetcher = FetcherSpy(.delayedSucceed(response, nanos: 100_000_000))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            showLoadingOnRefresh: false,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0")
+        )
+
+        // Complete initial load
+        await vm.refreshStatus()
+        #expect(vm.status == .upToDate)
+        #expect(vm.isLoading == false)
+
+        // Now do a refresh - isLoading should stay false
+        async let work: Void = vm.refreshStatus()
+        await Task.yield()
+
+        #expect(vm.isLoading == false)
+
+        await work
+    }
+
+    @Test("isLoading is true on refresh when showLoadingOnRefresh is true")
+    func isLoading_trueOnRefresh_whenOptionEnabled() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let fetcher = FetcherSpy(.delayedSucceed(response, nanos: 100_000_000))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            showLoadingOnRefresh: true,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0")
+        )
+
+        // Complete initial load
+        await vm.refreshStatus()
+        #expect(vm.status == .upToDate)
+        #expect(vm.isLoading == false)
+
+        // Now do a refresh - isLoading should be true
+        async let work: Void = vm.refreshStatus()
+        await Task.yield()
+
+        #expect(vm.isLoading == true)
+
+        await work
+    }
 }
