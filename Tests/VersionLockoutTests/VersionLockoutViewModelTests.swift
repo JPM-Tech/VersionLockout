@@ -75,6 +75,22 @@ struct FixedAppVersionProvider: AppVersionProviding {
     func appVersionString() -> String { version }
 }
 
+final class InMemoryLastFetchStorage: LastFetchStoring, @unchecked Sendable {
+    private(set) var storedDate: Date?
+    private(set) var setCallCount: Int = 0
+
+    init(storedDate: Date? = nil) {
+        self.storedDate = storedDate
+    }
+
+    func lastFetchDate() -> Date? { storedDate }
+
+    func setLastFetchDate(_ date: Date) {
+        setCallCount += 1
+        storedDate = date
+    }
+}
+
 private enum TestError: Error { case boom }
 
 @MainActor
@@ -178,8 +194,8 @@ struct VersionLockoutViewModelTests {
         #expect(vm.isLoading == false)
     }
 
-    @Test("refreshStatus is gated by isLoading: second call while loading returns early")
-    func refreshStatus_gatePreventsDoubleFetch() async {
+    @Test("concurrent refreshStatus calls await the same in-flight task")
+    func refreshStatus_concurrentCallsAwaitSameTask() async {
         let url = URL(string: "https://example.com/lockout.json")!
         let response = makeResponse()
         let expectedStatus: VersionLockoutStatus = .upToDate
@@ -198,12 +214,15 @@ struct VersionLockoutViewModelTests {
         async let first: Void = vm.refreshStatus()
         await Task.yield()
 
-        await vm.refreshStatus() // should early-return
+        await vm.refreshStatus() // awaits the same in-flight task
 
         await first
 
+        // Only one fetch and calculation, even with concurrent calls
         #expect(fetcher.callCount == 1)
         #expect(calculator.callCount == 1)
+        // Both callers see the result
+        #expect(vm.status == expectedStatus)
     }
 
     @Test("refreshStatus passes appVersion from provider to calculator")
@@ -225,5 +244,165 @@ struct VersionLockoutViewModelTests {
         await vm.refreshStatus()
 
         #expect(calculator.lastAppVersion == "2026.01.14")
+    }
+
+    // MARK: - Caching Tests
+
+    @Test("refreshStatusIfNeeded skips fetch when within refresh interval")
+    func refreshStatusIfNeeded_skipsWhenWithinInterval() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let now = Date()
+        let lastFetch = now.addingTimeInterval(-1 * 3600) // 1 hour ago
+
+        let fetcher = FetcherSpy(.succeed(response))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+        let storage = InMemoryLastFetchStorage(storedDate: lastFetch)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            refreshIntervalHours: 3,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
+            dateProvider: { now },
+            lastFetchStorage: storage
+        )
+
+        await vm.refreshStatusIfNeeded()
+
+        #expect(fetcher.callCount == 0)
+    }
+
+    @Test("refreshStatusIfNeeded fetches when past refresh interval")
+    func refreshStatusIfNeeded_fetchesWhenPastInterval() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let now = Date()
+        let lastFetch = now.addingTimeInterval(-4 * 3600) // 4 hours ago
+
+        let fetcher = FetcherSpy(.succeed(response))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+        let storage = InMemoryLastFetchStorage(storedDate: lastFetch)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            refreshIntervalHours: 3,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
+            dateProvider: { now },
+            lastFetchStorage: storage
+        )
+
+        await vm.refreshStatusIfNeeded()
+
+        #expect(fetcher.callCount == 1)
+    }
+
+    @Test("refreshStatusIfNeeded fetches at exact refresh interval boundary")
+    func refreshStatusIfNeeded_fetchesAtExactBoundary() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let now = Date()
+        let lastFetch = now.addingTimeInterval(-3 * 3600) // exactly 3 hours ago
+
+        let fetcher = FetcherSpy(.succeed(response))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+        let storage = InMemoryLastFetchStorage(storedDate: lastFetch)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            refreshIntervalHours: 3,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
+            dateProvider: { now },
+            lastFetchStorage: storage
+        )
+
+        await vm.refreshStatusIfNeeded()
+
+        #expect(fetcher.callCount == 1)
+    }
+
+    @Test("refreshStatusIfNeeded fetches when no previous fetch recorded")
+    func refreshStatusIfNeeded_fetchesWhenNoPreviousFetch() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let now = Date()
+
+        let fetcher = FetcherSpy(.succeed(response))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+        let storage = InMemoryLastFetchStorage(storedDate: nil)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            refreshIntervalHours: 3,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
+            dateProvider: { now },
+            lastFetchStorage: storage
+        )
+
+        await vm.refreshStatusIfNeeded()
+
+        #expect(fetcher.callCount == 1)
+    }
+
+    @Test("refreshStatus saves fetch date after successful fetch")
+    func refreshStatus_savesFetchDateOnSuccess() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+        let response = makeResponse()
+
+        let now = Date()
+
+        let fetcher = FetcherSpy(.succeed(response))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+        let storage = InMemoryLastFetchStorage(storedDate: nil)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
+            dateProvider: { now },
+            lastFetchStorage: storage
+        )
+
+        await vm.refreshStatus()
+
+        #expect(storage.setCallCount == 1)
+        #expect(storage.storedDate == now)
+    }
+
+    @Test("refreshStatus does not save fetch date on failure")
+    func refreshStatus_doesNotSaveFetchDateOnFailure() async {
+        let url = URL(string: "https://example.com/lockout.json")!
+
+        let now = Date()
+
+        let fetcher = FetcherSpy(.fail(TestError.boom))
+        let calculator = StatusCalculatorSpy(result: .upToDate)
+        let storage = InMemoryLastFetchStorage(storedDate: nil)
+
+        let vm = VersionLockoutViewModel(
+            url,
+            fetcher: fetcher,
+            statusCalculator: calculator,
+            appVersionProvider: FixedAppVersionProvider(version: "1.0.0"),
+            dateProvider: { now },
+            lastFetchStorage: storage
+        )
+
+        await vm.refreshStatus()
+
+        #expect(storage.setCallCount == 0)
+        #expect(storage.storedDate == nil)
     }
 }

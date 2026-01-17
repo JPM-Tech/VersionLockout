@@ -74,6 +74,34 @@ End of Life (Android Only):
 
 ![End of life screen](Docs/Images/EOL-Example.png)
 
+### Automatic Refresh for Long-Running Apps
+
+By default, VersionLockout re-checks the version API every **3 hours** when your app returns to the foreground. This ensures long-running apps (e.g., apps that stay open for days) don't miss important version updates.
+
+**How it works:**
+- On initial launch, the version check runs immediately
+- The last fetch timestamp is stored in UserDefaults
+- When the app returns to the foreground (`scenePhase` becomes `.active`), VersionLockout checks if 3 hours have elapsed since the last fetch
+- If the interval has passed, a new fetch is triggered automatically
+
+**Custom refresh interval:**
+```swift
+// Example with custom 1-hour refresh interval
+@State var versionLockoutVM = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    refreshIntervalHours: 1
+)
+```
+
+**Disable automatic refresh:**
+To effectively disable automatic refresh (check only on launch), set a very large interval:
+```swift
+@State var versionLockoutVM = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    refreshIntervalHours: 8760 // 1 year
+)
+```
+
 ### Displaying your own custom views
 
 If you want to display your own view for any status, then the code would look like the following example:
