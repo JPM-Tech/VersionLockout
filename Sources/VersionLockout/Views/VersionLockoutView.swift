@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 public struct VersionLockoutView<
     LoadingView: View,
     Recommended: View,
@@ -17,10 +15,11 @@ public struct VersionLockoutView<
     Content: View
 >: View {
 
+    @Environment(\.scenePhase) private var scenePhase
     @Bindable var viewModel: VersionLockoutViewModel
 
     @ViewBuilder let loading: () -> LoadingView
-    @ViewBuilder let recommedUpdate: (URL, @escaping () -> Void) -> Recommended
+    @ViewBuilder let recommendUpdate: (URL, @escaping () -> Void) -> Recommended
     @ViewBuilder let requireUpdate: (URL) -> Required
     @ViewBuilder let eol: (String?) -> EOL
     @ViewBuilder let content: () -> Content
@@ -42,7 +41,7 @@ public struct VersionLockoutView<
         self.viewModel = viewModel
         self.loading = ifLoading
         self.requireUpdate = updateRequred
-        self.recommedUpdate = updateRecommended
+        self.recommendUpdate = updateRecommended
         self.eol = endOfLife
         self.content = content
     }
@@ -55,7 +54,7 @@ public struct VersionLockoutView<
             case let .required(url):
                 requireUpdate(url)
             case let .recommended(url):
-                recommedUpdate(url) {
+                recommendUpdate(url) {
                     viewModel.status = .upToDate
                 }
             case .upToDate:
@@ -66,6 +65,13 @@ public struct VersionLockoutView<
         }
         .task {
             await viewModel.refreshStatus()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .active {
+                Task {
+                    await viewModel.refreshStatusIfNeeded()
+                }
+            }
         }
     }
 }

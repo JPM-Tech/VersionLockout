@@ -67,6 +67,50 @@ struct ExampleApp: App {
 |![Recommended update screen](Docs/Images/Recommended-Update-Example.png)|![Required update screen](Docs/Images/Required-Update-Example.png)|![End of life screen](Docs/Images/EOL-Example.png)|
 
 
+### Automatic Refresh for Long-Running Apps
+
+By default, VersionLockout re-checks the version API every **3 hours** when your app returns to the foreground. This ensures long-running apps (e.g., apps that stay open for days) don't miss important version updates.
+
+**How it works:**
+- On initial launch, the version check runs immediately
+- The last fetch timestamp is stored in UserDefaults
+- When the app returns to the foreground (`scenePhase` becomes `.active`), VersionLockout checks if 3 hours have elapsed since the last fetch
+- If the interval has passed, a new fetch is triggered automatically
+
+**Custom refresh interval:**
+The `refreshInterval` parameter accepts any `Measurement<UnitDuration>`, giving you flexibility in how you specify the interval:
+```swift
+// 1 hour
+@State var vm = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    refreshInterval: .init(value: 1, unit: .hours)
+)
+
+// 30 minutes
+@State var vm = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    refreshInterval: .init(value: 30, unit: .minutes)
+)
+```
+
+**Disable automatic refresh:**
+To effectively disable automatic refresh (check only on launch), set a very large interval:
+```swift
+@State var versionLockoutVM = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    refreshInterval: .init(value: 1, unit: .days) // Check once per day
+)
+```
+
+**Loading state on refresh:**
+By default, the loading state (`isLoading`) only shows on the initial load when no status exists yet. Subsequent refreshes happen silently in the background, keeping the current content visible. If you want to show a loading indicator on every refresh:
+```swift
+@State var versionLockoutVM = VersionLockoutViewModel(
+    URL(string: "https://github.com/link-to-my-version-data.json")!,
+    showLoadingOnRefresh: true
+)
+```
+
 ### Displaying your own custom views
 
 If you want to display your own view for any status, then the code would look like the following example:
